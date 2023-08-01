@@ -1,5 +1,5 @@
 # packed-uints
-Array of uints that scales from u4 to u32 to minimize wasted space while still being fast. 
+Array of uints that scales from u4 to u32 to minimize wasted space while still being fast. Credits to [Martin Janin](https://github.com/Involture) for working on the implementation!
 
 This is a very specialized structure with niche applications, in my case it's for storing Bloc data in Chunks for a voxel game.
 
