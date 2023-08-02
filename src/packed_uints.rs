@@ -1,6 +1,7 @@
 const U4_IN_U8: usize = 8 / 4;
 const PARITY_MASK: usize = U4_IN_U8 - 1;
 
+#[derive(Debug, Clone)]
 pub enum PackedEnum {
     U4(Vec<u8>),
     U8(Vec<u8>),
@@ -65,7 +66,7 @@ impl PackedEnum {
     }
 }
 
-
+#[derive(Debug, Clone)]
 pub struct PackedUints {
     pub data: PackedEnum,
     pub mask: usize,
@@ -74,15 +75,30 @@ pub struct PackedUints {
 
 impl PackedUints {
     pub fn new(length: usize) -> Self {
-        PackedUints {
-            data: PackedEnum::U4(vec![0; (length+U4_IN_U8-1) / U4_IN_U8]),
-            mask: 0b1111,
-            length
+        PackedUints::filled(length, 0)
+    }
+
+    pub fn filled(length: usize, value: usize) -> Self {
+        let bits = value.max(2).ilog2();
+        let data = if bits < 4 {
+            let value = value | (value << 4);
+            PackedEnum::U4(vec![value as u8; (length+U4_IN_U8-1) / U4_IN_U8])
+        } else if bits < 8 {
+            PackedEnum::U8(vec![value as u8; length])
+        } else if bits < 16 {
+            PackedEnum::U16(vec![value as u16; length])
+        } else {
+            PackedEnum::U32(vec![value as u32; length])
+        };
+        PackedUints { 
+            data: data, 
+            mask: 0b1111, 
+            length: length 
         }
     }
 
     pub fn from(values: &[usize]) -> Self {
-        let bits = values.iter().max().unwrap_or(&0).ilog2();
+        let bits = values.iter().max().unwrap_or(&2).ilog2();
         let data = if bits < 4 {
             let mut res = vec![0; (values.len()+U4_IN_U8-1) / U4_IN_U8];
             for i in (0..values.len()).step_by(2) {
@@ -132,9 +148,8 @@ impl PackedUints {
 #[cfg(test)]
 mod tests {
     use std::iter::zip;
-
-    use super::PackedUints;
     use rand::Rng;
+    use super::PackedUints;
 
     fn roundtrip(usizes: &mut PackedUints, values: &[usize]) {
         // store a bunch of values
