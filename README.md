@@ -1,5 +1,5 @@
 # packed-uints
-Array of uints that scales from u4 to u32 to minimize wasted space while still being fast. 
+Array of uints that scales from u4 to u32 to minimize wasted space while still being fast. Credits to [Martin Janin](https://github.com/Involture) for working on the implementation!
 
 This is a very specialized structure with niche applications, in my case it's for storing Bloc data in Chunks for a voxel game.
 
@@ -25,26 +25,26 @@ However the moment we set the value at index 3 to 42, PackedUints switches to 8 
 *Note: PackedUints only does upscaling, for performance reasons.*
 
 ## Benchmark
-I compared PackedUints to the performance of a regular `Vec<u32>` as well as [Unthbuf](https://github.com/Longor1996/unthbuf), a crate with similar purposes except it gives the bitsize decision to the user instead of upscaling automatically like PackedUints does.
+I compared PackedUints to the performance of a regular `Vec<u32>` as well as [Unthbuf](https://github.com/Longor1996/unthbuf), a crate with similar purposes except it gives the bitsize decision to the user instead of upscaling automatically like PackedUints does. Unthbuf also has the benefit of allowing non aligned values like u5 whereas PackedUints only supports u4, u8, u16 and u32.
 
 The 3 structures are benchmarked on: 
 - random read performance (1 million "u4" values)
 - random write performance (1 million "u4" values)
 - initialisation from an existing Vec (1 million u32 values)
 
-Here are the results on my Intel(R) Xeon(R) CPU E5-1650 v3 @ 3.50GHz CPU (from 2014 so quite old):
+Here are the results on an Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz CPU:
 ```
-vec_rand_read-1m-4             time:   [331.06 µs 332.79 µs 334.85 µs]
-vec_rand_write-1m-4            time:   [2.8150 ms 2.8530 ms 2.8980 ms]
-vec_from_vec-1m                time:   [2.1652 ms 2.1812 ms 2.1973 ms]
+vec_read                time:   379.39 µs
+vec_write               time:   2.0634 ms
+vec_from_vec            time:   1.7448 ms
 ---
-packed_uints_rand_read-1m-4    time:   [436.69 µs 437.80 µs 438.78 µs]
-packed_uints_rand_write-1m-4   time:   [5.0530 ms 5.1564 ms 5.2979 ms]
-packed_uints_from_vec-1m       time:   [2.4395 ms 2.4574 ms 2.4771 ms]
+packed_uints_read       time:   438.08 µs
+packed_uints_write      time:   3.3806 ms
+packed_uints_from_vec   time:   1.9934 ms
 ---
-unthbuf_rand_read-1m-4         time:   [469.39 µs 480.58 µs 494.96 µs]
-unthbuf_rand_write-1m-4        time:   [4.4435 ms 4.4535 ms 4.4659 ms]
-unthbuf_from_vec-1m            time:   [9.2428 ms 9.3750 ms 9.5319 ms]
+unthbuf_read            time:   533.75 µs
+unthbuf_write           time:   3.1632 ms
+unthbuf_vec             time:   6.2827 ms
 ```
 
-As you can see both crates have similar performance, not far from `Vec<u32>`, packed_uints is slightly slower on random writes but faster on initialization from a Vec.
+As you can see both crates have similar performance, not far from `Vec<u32>`, with packed_uints being slightly faster on random read significantly faster on initialization from a Vec.
