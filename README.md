@@ -34,17 +34,17 @@ The 3 structures are benchmarked on:
 
 Here are the results on an Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz CPU:
 ```
-vec_rand_read-1m-4             time:   [378.57 µs 379.39 µs 380.24 µs]
-vec_rand_write-1m-4            time:   [2.0457 ms 2.0634 ms 2.0842 ms]
-vec_from_vec-1m                time:   [1.7286 ms 1.7448 ms 1.7639 ms]
+vec_read                time:   379.39 µs
+vec_write               time:   2.0634 ms
+vec_from_vec            time:   1.7448 ms
 ---
-packed_uints_rand_read-1m-4    time:   [436.76 µs 438.08 µs 439.81 µs]
-packed_uints_rand_write-1m-4   time:   [3.3619 ms 3.3806 ms 3.4080 ms]
-packed_uints_from_vec-1m       time:   [1.9756 ms 1.9934 ms 2.0189 ms]
+packed_uints_read       time:   438.08 µs
+packed_uints_write      time:   3.3806 ms
+packed_uints_from_vec   time:   1.9934 ms
 ---
-unthbuf_rand_read-1m-4         time:   [526.08 µs 533.75 µs 541.30 µs]
-unthbuf_rand_write-1m-4        time:   [3.1491 ms 3.1632 ms 3.1778 ms]
-unthbuf_from_vec-1m            time:   [6.2294 ms 6.2827 ms 6.3435 ms]
+unthbuf_read            time:   533.75 µs
+unthbuf_write           time:   3.1632 ms
+unthbuf_vec             time:   6.2827 ms
 ```
 
 As you can see both crates have similar performance, not far from `Vec<u32>`, with packed_uints being slightly faster on random read significantly faster on initialization from a Vec.
