@@ -25,7 +25,7 @@ However the moment we set the value at index 3 to 42, PackedUints switches to 8 
 *Note: PackedUints only does upscaling, for performance reasons.*
 
 ## Benchmark
-I compared PackedUints to the performance of a regular `Vec<u32>` as well as [Unthbuf](https://github.com/Longor1996/unthbuf), a crate with similar purposes except it gives the bitsize decision to the user instead of upscaling automatically like PackedUints does.
+I compared PackedUints to the performance of a regular `Vec<u32>` as well as [Unthbuf](https://github.com/Longor1996/unthbuf), a crate with similar purposes except it gives the bitsize decision to the user instead of upscaling automatically like PackedUints does. Unthbuf also has the benefit of allowing non aligned values like u5 whereas PackedUints only supports u4, u8, u16 and u32.
 
 The 3 structures are benchmarked on: 
 - random read performance (1 million "u4" values)
