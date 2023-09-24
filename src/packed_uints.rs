@@ -13,9 +13,9 @@ impl PackedEnum {
     pub fn mask(&self) -> usize {
         match self {
             Self::U4(_) => 15 as usize,
-            Self::U8(_) => u8::MAX as usize - 1,
-            Self::U16(_) => u16::MAX as usize - 1,
-            Self::U32(_) => u32::MAX as usize - 1,
+            Self::U8(_) => u8::MAX as usize,
+            Self::U16(_) => u16::MAX as usize,
+            Self::U32(_) => u32::MAX as usize,
         }
     }
 
@@ -130,7 +130,7 @@ impl PackedUints {
 
     #[inline]
     pub fn set(&mut self, i: usize, value: usize) {
-        if value & self.mask != value {
+        if (value & self.mask) != value {
             let bits = value.ilog2();
             self.data = if bits < 8 {
                 PackedEnum::U8(self.data.iter().take(self.length).map(|a| a as u8).collect())
