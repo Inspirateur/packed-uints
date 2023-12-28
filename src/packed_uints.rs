@@ -54,6 +54,35 @@ impl PackedEnum {
         }
     }
 
+    fn set_aligned_range(&mut self, start: usize, end: usize, value: usize) {
+        match self {
+            Self::U4(data) => {
+                // NOTE: this part assumes we're storing u4 in u8 (unlike the rest of the code)
+                let value = value | value << 4;
+                let start = start / 2;
+                let end = end / 2;
+                for i in start..end {
+                    data[i] = value as u8;
+                }
+            }
+            Self::U8(data) => {
+                for i in start..end {
+                    data[i] = value as u8;
+                }
+            }
+            Self::U16(data) => {
+                for i in start..end {
+                    data[i] = value as u16;
+                }
+            }
+            Self::U32(data) => {
+                for i in start..end {
+                    data[i] = value as u32;
+                }
+            }
+        }
+    }
+
     fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = usize> + 'a> {
         match self {
             Self::U4(data) => Box::new(data.iter().flat_map(|a| {
@@ -129,7 +158,7 @@ impl PackedUints {
     }
 
     #[inline]
-    pub fn set(&mut self, i: usize, value: usize) {
+    fn upscale_if_needed(&mut self, value: usize) {
         if (value & self.mask) != value {
             let bits = value.ilog2();
             self.data = if bits < 8 {
@@ -141,7 +170,20 @@ impl PackedUints {
             };
             self.mask = self.data.mask();
         }
+    }
+
+    #[inline]
+    pub fn set(&mut self, i: usize, value: usize) {
+        self.upscale_if_needed(value);
         self.data.set(i, value)
+    }
+
+    #[inline]
+    pub fn set_aligned_range(&mut self, start: usize, end: usize, value: usize) {
+        // check that both start and length are even
+        debug_assert!(0b1 & (start | end) == 0b0);
+        self.upscale_if_needed(value);
+        self.data.set_aligned_range(start, end, value);
     }
 }
 
@@ -151,15 +193,17 @@ mod tests {
     use rand::Rng;
     use super::PackedUints;
 
-    fn roundtrip(usizes: &mut PackedUints, values: &[usize]) {
-        // store a bunch of values
-        for (i, value) in values.iter().enumerate() {
-            usizes.set(i, *value);
-        }
-        // retrieve them and test for equality
+    fn test_equal(usizes: &PackedUints, values: &[usize]) {
         for (i, value) in values.iter().enumerate() {
             assert_eq!(*value, usizes.get(i));
         }
+    }
+
+    fn roundtrip(usizes: &mut PackedUints, values: &[usize]) {
+        for (i, value) in values.iter().enumerate() {
+            usizes.set(i, *value);
+        }
+        test_equal(usizes, values);
     }
 
     #[test]
@@ -181,6 +225,17 @@ mod tests {
         let mut usizes = PackedUints::new(100);
         let values: [usize; 100] = [(); 100].map(|_| rng.gen_range(0..16));
         roundtrip(&mut usizes, &values);
+    }
+
+    #[test]
+    pub fn test_set_range() {
+        let mut usizes = PackedUints::new(100);
+        let mut values = [0; 100];
+        for i in 0..32 {
+            values[i] = 7;
+        }
+        usizes.set_aligned_range(0, 32, 7);
+        test_equal(&usizes, &values);
     }
 
     #[test]
