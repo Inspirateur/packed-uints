@@ -74,7 +74,7 @@ impl PackedEnum {
                     data[end] |= value;
                 }
                 let value = value | value << shift;
-                for i in (start + start_parity)..=(end - 1 + end_parity) {
+                for i in (start + start_parity)..(end + end_parity) {
                     data[i] = value;
                 }
             }
