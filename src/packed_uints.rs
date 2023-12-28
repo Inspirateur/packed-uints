@@ -58,24 +58,12 @@ impl PackedEnum {
         match self {
             Self::U4(data) => {
                 // NOTE: this part assumes we're storing u4 in u8 (unlike the rest of the code)
-                let shift = 4;
-                let end = end - 1;
-                let value = value as u8;
-                let start_parity = start & 0b1;
-                let end_parity = end & 0b1;
-                let start = start / 2;
-                let end = end / 2;
-                if start_parity == 1 {
-                    data[start] &= 0b1111;
-                    data[start] |= value << shift;
-                }
-                if end_parity == 0 {
-                    data[end] &= 0b1111 << shift;
-                    data[end] |= value;
-                }
-                let value = value | value << shift;
-                for i in (start + start_parity)..(end + end_parity) {
-                    data[i] = value;
+                for i in start..end {
+                    let shift: usize = 4 * (i & PARITY_MASK);
+                    let mask = 0b1111 << shift;
+                    let i = i / U4_IN_U8;
+                    data[i] &= !mask;
+                    data[i] |= (value as u8) << shift;
                 }
             }
             Self::U8(data) => {
