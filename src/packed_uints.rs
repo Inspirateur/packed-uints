@@ -54,15 +54,28 @@ impl PackedEnum {
         }
     }
 
-    fn set_aligned_range(&mut self, start: usize, end: usize, value: usize) {
+    fn set_range(&mut self, start: usize, end: usize, value: usize) {
         match self {
             Self::U4(data) => {
                 // NOTE: this part assumes we're storing u4 in u8 (unlike the rest of the code)
-                let value = value | value << 4;
+                let shift = 4;
+                let end = end - 1;
+                let value = value as u8;
+                let start_parity = start & 0b1;
+                let end_parity = end & 0b1;
                 let start = start / 2;
                 let end = end / 2;
-                for i in start..end {
-                    data[i] = value as u8;
+                if start_parity == 1 {
+                    data[start] &= 0b1111;
+                    data[start] |= value << shift;
+                }
+                if end_parity == 0 {
+                    data[end] &= 0b1111 << shift;
+                    data[end] |= value;
+                }
+                let value = value | value << shift;
+                for i in (start + start_parity)..=(end - 1 + end_parity) {
+                    data[i] = value;
                 }
             }
             Self::U8(data) => {
@@ -179,11 +192,10 @@ impl PackedUints {
     }
 
     #[inline]
-    pub fn set_aligned_range(&mut self, start: usize, end: usize, value: usize) {
+    pub fn set_range(&mut self, start: usize, end: usize, value: usize) {
         // check that both start and length are even
-        debug_assert!(0b1 & (start | end) == 0b0);
         self.upscale_if_needed(value);
-        self.data.set_aligned_range(start, end, value);
+        self.data.set_range(start, end, value);
     }
 }
 
@@ -227,15 +239,34 @@ mod tests {
         roundtrip(&mut usizes, &values);
     }
 
-    #[test]
-    pub fn test_set_range() {
-        let mut usizes = PackedUints::new(100);
-        let mut values = [0; 100];
-        for i in 0..32 {
-            values[i] = 7;
+    fn test_set_range(data_len: usize, start: usize, end: usize, value: usize) {
+        let mut usizes = PackedUints::new(data_len);
+        let mut values = vec![0; data_len];
+        for i in start..end {
+            values[i] = value;
         }
-        usizes.set_aligned_range(0, 32, 7);
+        usizes.set_range(start, end, value);
         test_equal(&usizes, &values);
+    }
+
+    #[test]
+    pub fn test_set_range_1() {
+        test_set_range(100, 0, 32, 7);
+    }
+
+    #[test]
+    pub fn test_set_range_2() {
+        test_set_range(100, 1, 32, 7);
+    }
+
+    #[test]
+    pub fn test_set_range_3() {
+        test_set_range(100, 1, 31, 7);
+    }
+
+    #[test]
+    pub fn test_set_range_4() {
+        test_set_range(100, 0, 31, 7);
     }
 
     #[test]
