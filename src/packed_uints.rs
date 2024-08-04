@@ -94,6 +94,45 @@ impl PackedEnum {
             Self::U32(data) => Box::new(data.iter().map(|a| *a as usize)),
         }
     }
+    
+    pub fn unpack_u8(&self) -> Vec<u8> {
+        match self {
+            Self::U4(data) => {
+                data.iter().flat_map(|a| {
+                    [(a & 0b1111), (a >> 4)]
+                }).collect()
+            },
+            Self::U8(data) => data.iter().map(|a| *a as u8).collect(),
+            Self::U16(data) => data.iter().map(|a| *a as u8).collect(),
+            Self::U32(data) => data.iter().map(|a| *a as u8).collect(),
+        }
+    }
+
+    pub fn unpack_u16(&self) -> Vec<u16> {
+        match self {
+            Self::U4(data) => {
+                data.iter().flat_map(|a| {
+                    [(a & 0b1111) as u16, (a >> 4) as u16]
+                }).collect()
+            },
+            Self::U8(data) => data.iter().map(|a| *a as u16).collect(),
+            Self::U16(data) => data.clone(),
+            Self::U32(data) => data.iter().map(|a| *a as u16).collect(),
+        }
+    }
+
+    pub fn unpack_u32(&self) -> Vec<u32> {
+        match self {
+            Self::U4(data) => {
+                data.iter().flat_map(|a| {
+                    [(a & 0b1111) as u32, (a >> 4) as u32]
+                }).collect()
+            },
+            Self::U8(data) => data.iter().map(|a| *a as u32).collect(),
+            Self::U16(data) => data.iter().map(|a| *a as u32).collect(),
+            Self::U32(data) => data.clone(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -184,6 +223,24 @@ impl PackedUints {
         // check that both start and length are even
         self.upscale_if_needed(value);
         self.data.set_range(start, end, value);
+    }
+
+    /// Same thing as iter().map(|value| value as u8).collect() but 5x faster
+    #[inline]
+    pub fn unpack_u8(&self) -> Vec<u8> {
+        self.data.unpack_u8()
+    }
+
+    /// Same thing as iter().map(|value| value as u16).collect() but 5x faster
+    #[inline]
+    pub fn unpack_u16(&self) -> Vec<u16> {
+        self.data.unpack_u16()
+    }
+
+    /// Same thing as iter().map(|value| value as u32).collect() but 5x faster
+    #[inline]
+    pub fn unpack_u32(&self) -> Vec<u32> {
+        self.data.unpack_u32()
     }
 }
 
