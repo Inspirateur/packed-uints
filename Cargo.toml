@@ -1,6 +1,6 @@
 [package]
 name = "packed-uints"
-version = "0.1.8"
+version = "0.1.9"
 edition = "2021"
 description = "Array of uints that scales from u4 to u32 to minimize wasted space while still being fast"
 license = "Unlicense"

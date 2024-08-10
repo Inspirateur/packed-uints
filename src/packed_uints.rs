@@ -12,7 +12,7 @@ pub enum PackedEnum {
 impl PackedEnum {
     pub fn mask(&self) -> usize {
         match self {
-            Self::U4(_) => 15 as usize,
+            Self::U4(_) => 0b1111 as usize,
             Self::U8(_) => u8::MAX as usize,
             Self::U16(_) => u16::MAX as usize,
             Self::U32(_) => u32::MAX as usize,
@@ -78,6 +78,36 @@ impl PackedEnum {
             }
             Self::U32(data) => {
                 for i in start..end {
+                    data[i] = value as u32;
+                }
+            }
+        }
+    }
+
+    fn set_range_step(&mut self, start: usize, end: usize, step: usize, value: usize) {
+        match self {
+            Self::U4(data) => {
+                // NOTE: this part assumes we're storing u4 in u8 (unlike the rest of the code)
+                for i in (start..end).step_by(step) {
+                    let shift: usize = 4 * (i & PARITY_MASK);
+                    let mask = 0b1111 << shift;
+                    let i = i / U4_IN_U8;
+                    data[i] &= !mask;
+                    data[i] |= (value as u8) << shift;
+                }
+            }
+            Self::U8(data) => {
+                for i in (start..end).step_by(step) {
+                    data[i] = value as u8;
+                }
+            }
+            Self::U16(data) => {
+                for i in (start..end).step_by(step) {
+                    data[i] = value as u16;
+                }
+            }
+            Self::U32(data) => {
+                for i in (start..end).step_by(step) {
                     data[i] = value as u32;
                 }
             }
@@ -223,6 +253,12 @@ impl PackedUints {
         // check that both start and length are even
         self.upscale_if_needed(value);
         self.data.set_range(start, end, value);
+    }
+
+    #[inline]
+    pub fn set_range_step(&mut self, start: usize, end: usize, step: usize, value: usize) {
+        self.upscale_if_needed(value);
+        self.data.set_range_step(start, end, step, value);
     }
 
     /// Same thing as iter().map(|value| value as u8).collect() but 5x faster

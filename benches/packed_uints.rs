@@ -56,10 +56,42 @@ fn from_vec_benchmark(c: &mut Criterion) {
     });
 }
 
+fn set_range(packed: &mut PackedUints) {
+    packed.set_range(64, 64*2, 3);
+}
+
+fn set_range_benchmark<const BITSIZE: u32>(c: &mut Criterion) {
+    let mut rng = rand::thread_rng();
+    // generate a random packed array to write to
+    let mut values = vec![0; N];
+    values.fill_with(|| rng.gen_range(0..2_usize.pow(BITSIZE)));
+    let mut packed = PackedUints::from(values.as_slice());
+    c.bench_function(&format!("packed_uints_set_range-{}", BITSIZE), |b| {
+        b.iter(|| set_range(black_box(&mut packed)))
+    });
+}
+
+fn set_range_step(packed: &mut PackedUints) {
+    packed.set_range_step(64*64, 64*64*2, 64, 3);
+}
+
+fn set_range_step_benchmark<const BITSIZE: u32>(c: &mut Criterion) {
+    let mut rng = rand::thread_rng();
+    // generate a random packed array to write to
+    let mut values = vec![0; N];
+    values.fill_with(|| rng.gen_range(0..2_usize.pow(BITSIZE)));
+    let mut packed = PackedUints::from(values.as_slice());
+    c.bench_function(&format!("packed_uints_set_range_step-{}", BITSIZE), |b| {
+        b.iter(|| set_range_step(black_box(&mut packed)))
+    });
+}
+
 criterion_group!(
     packed_uints, 
     read_benchmark<4>, 
     write_benchmark<4>,
-    from_vec_benchmark
+    from_vec_benchmark,
+    // set_range_benchmark<4>,
+    // set_range_step_benchmark<4>,
 );
 criterion_main!(packed_uints);
