@@ -358,4 +358,17 @@ mod tests {
         let values: [usize; 100] = [(); 100].map(|_| rng.gen_range(0..u32::MAX) as usize);
         roundtrip(&mut usizes, &values);
     }
+
+    #[test]
+    pub fn test_range_step() {
+        let mut usizes = PackedUints::new(32);
+        let mut values = [0; 32];
+        usizes.set_range_step(1, 18, 4, 3);
+        values[1] = 3;
+        values[5] = 3;
+        values[9] = 3;
+        values[13] = 3;
+        values[17] = 3;
+        test_equal(&usizes, &values);
+    }
 }
